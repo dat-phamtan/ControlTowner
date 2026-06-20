@@ -10,21 +10,27 @@ namespace ControlTowner.Utility
     {
         public static SimpleClock Instance { get; } = new SimpleClock();
         private SimpleClock() { }
-        public DateTime SimulatedTime { get; private set; }
-        public float TimeScale { get; set; } = 60f;
 
-        public DateTime lastRealTime;
+        public DateTime SimulatedTime { get; private set; }
+
+        private float timeScale;
+        private TimeSpan mainStart;
+        private TimeSpan mainEnd;
+        private DateTime lastRealTime;
         private readonly object lockObject = new();
 
         public event Action<DateTime> OnTick;
-        public Action OnMaintenanceStart;
-        public Action OnNewDayStart;
+        public event Action OnMaintenanceStart;
+        public event Action OnNewDayStart;
         
 
-        public void InitClock(int startHour, int startMinute)
+        public void InitClock(int startHour, int startMinute, float timeScale, int mainStartHour, int mainStartMinute, int mainEndHour, int mainEndMinute)
         {
             SimulatedTime = DateTime.Today.AddHours(startHour).AddMinutes(startMinute);
             lastRealTime = DateTime.UtcNow;
+            mainStart = new TimeSpan(mainStartHour, mainStartMinute, 0);
+            mainEnd = new TimeSpan(mainEndHour, mainEndMinute, 0);
+            this.timeScale = timeScale;
         }
 
         
@@ -37,7 +43,7 @@ namespace ControlTowner.Utility
             {
                 delta = (currentRealTime - lastRealTime).TotalSeconds;
                 DateTime oldTime = SimulatedTime;
-                SimulatedTime = SimulatedTime.AddSeconds(Math.Floor(delta * TimeScale));
+                SimulatedTime = SimulatedTime.AddSeconds(Math.Floor(delta * timeScale));
                 lastRealTime = currentRealTime;
                 Console.WriteLine($"{SimulatedTime}");
                 CheckSpecialEvent(oldTime, SimulatedTime);
@@ -50,8 +56,8 @@ namespace ControlTowner.Utility
 
         private void CheckSpecialEvent(DateTime oldTime, DateTime newTime)
         {
-            TimeSpan maintenanceStart = new(SimulationConfig.MaintenanceStartHour, SimulationConfig.MaintenanceStartMinute, 0);
-            TimeSpan maintenanceEnd = new(SimulationConfig.MaintenanceEndHour, SimulationConfig.MaintenanceEndMinute, 0);
+            TimeSpan maintenanceStart = new(mainStart.Hours, mainStart.Minutes, 0);
+            TimeSpan maintenanceEnd = new(mainEnd.Hours, mainEnd.Minutes, 0);
             //Console.Write($" {maintenanceEnd}");
 
             if (HasCrossedThreshold(oldTime, newTime, maintenanceStart))

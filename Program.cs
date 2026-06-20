@@ -13,21 +13,22 @@ namespace ControlTowner
         static void Main(string[] args)
         {
             //logger 
-            var controller = new Controller();
+            var config = new SimulationConfig();
+            var controller = new Controller(config.runawayCount, config.landingDuration, config.takeoffDuration);
             controller.Init();
-            SimpleClock.Instance.InitClock(4, 59);
+            SimpleClock.Instance.InitClock(4, 59,config.timeScale, config.maintenanceStartHour, config.maintenanceStartMinute, config.maintenanceEndHour, config.maintenanceEndMinute);
             //looger
             //SimpleClock.Instance.OnTick += 
 
             //clock thread
-            //Task.Run(async () =>
-            //{
-            //    while (true)
-            //    {
-            //        SimpleClock.Instance.UpdateClock();
-            //        await Task.Delay(1000);
-            //    }
-            //});
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    SimpleClock.Instance.UpdateClock();
+                    await Task.Delay(1000);
+                }
+            });
 
 
 

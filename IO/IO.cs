@@ -30,7 +30,7 @@ namespace ControlTowner.IO
     {
         public static string Load()
         {
-            if (File.Exists(Path.FLIGHT_SCHEDULE_PATH))
+            if (!File.Exists(Path.FLIGHT_SCHEDULE_PATH))
             {
                 Console.WriteLine("File does not exist.");
                 return string.Empty;

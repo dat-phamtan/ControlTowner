@@ -16,4 +16,5 @@ namespace ControlTowner.Config
         public int maintenanceEndHour = 5;
         public int maintenanceEndMinute = 15;
     }
+    public Simua
 }

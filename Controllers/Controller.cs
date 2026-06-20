@@ -7,20 +7,19 @@ using ControlTowner.Utility;
 
 namespace ControlTowner.Controllers
 {
-    public class Controller
+    public class Controller(int runwayCount, float landingDuration, float takeoffDuration)
     {
         private readonly Queue<Flight> takeoffQueue = new();
         private readonly Queue<Flight> landingQueue = new();
 
         private RunwayManager runwayManager;
-        private SimulationConfig simulationConfig;
         private IAirportState currentState;
         private ILandingGenerator flightGenerator;
         private bool isDayFinalized = false;
 
         public void Init()
         {
-            runwayManager = new RunwayManager(simulationConfig.runawayCount);
+            runwayManager = new RunwayManager(runwayCount);
             currentState = new NormalAirportState();
 
             SimpleClock.Instance.OnMaintenanceStart += HandleMaintenanceStart;
@@ -57,7 +56,7 @@ namespace ControlTowner.Controllers
             {
                 if (runway.AssignFlight(landingFlight))
                 {
-                    runway.RealDuration = simulationConfig.landingDuration;
+                    runway.RealDuration = landingDuration;
                     ExecuteFlight(runway, landingFlight);
                 }
             }
@@ -65,7 +64,7 @@ namespace ControlTowner.Controllers
             {
                 if (runway.AssignFlight(takeoffFlight))
                 {
-                    runway.RealDuration = simulationConfig.takeoffDuration;
+                    runway.RealDuration = takeoffDuration;
                     ExecuteFlight(runway, takeoffFlight);
                 }
             }
