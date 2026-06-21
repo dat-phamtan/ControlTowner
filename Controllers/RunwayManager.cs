@@ -33,7 +33,9 @@ namespace ControlTowner.Controllers
 
         public bool AllRunwayEmpty()
         {
-            return GetAvailableRunway() == null;
+            for (int i = 0; i < runways.Length; i++)
+                if (runways[i].IsOccupied) return false;
+            return true;
         }
 
 

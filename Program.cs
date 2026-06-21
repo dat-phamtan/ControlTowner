@@ -58,7 +58,7 @@ namespace ControlTowner
             while (true)
             {
                 SimpleClock.Instance.UpdateClock();
-                await Task.Delay(1000);
+                await Task.Delay(100);
             }
         }
     }

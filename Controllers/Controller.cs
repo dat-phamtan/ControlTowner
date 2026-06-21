@@ -29,6 +29,7 @@ namespace ControlTowner.Controllers
 
         private List<Flight> todaySchedule = [];
         private readonly object scheduleLock = new();
+        private readonly object processLock = new();
 
         private bool maintenanceMode = false;
         private List<Flight> unfinishedFlights = new();
@@ -106,28 +107,28 @@ namespace ControlTowner.Controllers
 
         public void ProcessQueues()
         {
-            Runway? runway = runwayManager.GetAvailableRunway();
-            if (runway == null) return;
-            if (landingQueue.Count == 0 && takeoffQueue.Count == 0) return;
+            lock (processLock)
+            {
+                Runway? runway = runwayManager.GetAvailableRunway();
+                if (runway == null) return;
+                if (landingQueue.Count == 0 && takeoffQueue.Count == 0) return;
 
-            if (landingQueue.TryDequeue(out Flight? landingFlight))
-            {
-                if (runway.AssignFlight(landingFlight))
+                Flight? flight = null;
+                if (landingQueue.TryDequeue(out Flight? lf))
+                    flight = lf;
+                else if (takeoffQueue.TryDequeue(out Flight? tf))
+                    flight = tf;
+
+                if (flight != null && runway.AssignFlight(flight))
                 {
-                    runway.RealDuration = landingDuration;
-                    ExecuteFlight(runway, landingFlight);
-                    ProcessQueues();
+                    runway.RealDuration = (flight.Type == FlightType.Landing) ? landingDuration : takeoffDuration;
+                    ExecuteFlight(runway, flight);
                 }
             }
-            else if (takeoffQueue.TryDequeue(out Flight? takeoffFlight))
-            {
-                if (runway.AssignFlight(takeoffFlight))
-                {
-                    runway.RealDuration = takeoffDuration;
-                    ExecuteFlight(runway, takeoffFlight);
-                    ProcessQueues();
-                }
-            }
+
+            if (runwayManager.GetAvailableRunway() != null &&
+                (landingQueue.Count > 0 || takeoffQueue.Count > 0))
+                ProcessQueues();
         }
 
 

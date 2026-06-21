@@ -38,18 +38,18 @@ namespace ControlTowner.Utility
         {
             DateTime currentRealTime = DateTime.UtcNow;
             double delta;
-
+            DateTime oldTime, newTime;
             lock (lockObject)
             {
                 delta = (currentRealTime - lastRealTime).TotalSeconds;
-                DateTime oldTime = SimulatedTime;
+                oldTime = SimulatedTime;
                 SimulatedTime = SimulatedTime.AddSeconds(Math.Floor(delta * timeScale));
                 lastRealTime = currentRealTime;
+                newTime = SimulatedTime;
                 //Console.WriteLine($"{SimulatedTime}");
-                CheckSpecialEvent(oldTime, SimulatedTime);
             }
-            
-            OnTick?.Invoke(SimulatedTime);
+            CheckSpecialEvent(oldTime, newTime);
+            OnTick?.Invoke(newTime);
             return delta;
         }
 
