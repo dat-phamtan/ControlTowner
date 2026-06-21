@@ -1,6 +1,7 @@
 ﻿using ControlTowner.Config;
 using ControlTowner.Entity;
 using ControlTowner.IO;
+using ControlTowner.Utility;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,7 +10,7 @@ namespace ControlTowner.Controllers
 {
     public interface IStorage
     {
-        public List<Flight> LoadDailySchedule();
+        public List<Flight> LoadDailySchedule(DateTime today, ILogger logger);
         public void SaveDailyLog(string flightCode, int flightHour, int flightMinute, int runwayId, char flightType);
         public void GenerateDailySchedule(int mainStartHour, int mainStartMinute, int mainEndHour, int mainEndMinute, List<Flight>? delayedDailySchedule);
     }
@@ -48,7 +49,7 @@ namespace ControlTowner.Controllers
         }
 
 
-        public List<Flight> LoadDailySchedule()
+        public List<Flight> LoadDailySchedule(DateTime today, ILogger logger)
         {
             string raw = FlightScheduleIO.Load();
             var flights = new List<Flight>();
@@ -61,9 +62,9 @@ namespace ControlTowner.Controllers
                 if (!int.TryParse(parts[1], out int hour)) continue;
                 if (!int.TryParse(parts[2], out int minute)) continue;
 
-                var flight = new Flight(code, FlightType.Takeoff)
+                var flight = new Flight(code, FlightType.Takeoff, logger)
                 {
-                    ScheduledTime = new DateTime(hour, minute, 0)
+                    ScheduledTime = today.AddHours(hour).AddMinutes(minute)
                 };
                 flights.Add(flight);
             }

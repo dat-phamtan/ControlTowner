@@ -45,7 +45,7 @@ namespace ControlTowner.Utility
                 DateTime oldTime = SimulatedTime;
                 SimulatedTime = SimulatedTime.AddSeconds(Math.Floor(delta * timeScale));
                 lastRealTime = currentRealTime;
-                Console.WriteLine($"{SimulatedTime}");
+                //Console.WriteLine($"{SimulatedTime}");
                 CheckSpecialEvent(oldTime, SimulatedTime);
             }
             
@@ -61,14 +61,9 @@ namespace ControlTowner.Utility
             //Console.Write($" {maintenanceEnd}");
 
             if (HasCrossedThreshold(oldTime, newTime, maintenanceStart))
-            {
                 OnMaintenanceStart.Invoke();
-            }
-
             if (HasCrossedThreshold(oldTime, newTime, maintenanceEnd))
-            {
                 OnNewDayStart.Invoke();
-            }
         }
 
 
@@ -78,14 +73,9 @@ namespace ControlTowner.Utility
             TimeSpan newTimeOfDay = newTime.TimeOfDay;
 
             if (oldTimeOfDay <= newTimeOfDay) // not cross the midnight
-            {
                 return oldTimeOfDay < threshold && newTimeOfDay >= threshold;
-            }
             else
-            {
                 return oldTimeOfDay < threshold || newTimeOfDay >= threshold;
-            }
-
         }
     }
 }

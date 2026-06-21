@@ -32,8 +32,7 @@ namespace ControlTowner.IO
         {
             if (!File.Exists(Path.FLIGHT_SCHEDULE_PATH))
             {
-                Console.WriteLine("File does not exist.");
-                return string.Empty;
+                throw new FileNotFoundException("File not found");
             }
             return File.ReadAllText(Path.FLIGHT_SCHEDULE_PATH);
         }
@@ -42,8 +41,7 @@ namespace ControlTowner.IO
         {
             if (!File.Exists(Path.FLIGHT_SCHEDULE_PATH))
             {
-                Console.WriteLine("File does not exist.");
-                return;
+                throw new FileNotFoundException("File not found");
             }
             File.WriteAllText(Path.FLIGHT_SCHEDULE_PATH, data);
         }
@@ -56,8 +54,7 @@ namespace ControlTowner.IO
         {
             if (!File.Exists(Path.FLIGHT_DIARY_PATH))
             {
-                Console.WriteLine("File does not exist.");
-                return string.Empty;
+                throw new FileNotFoundException("File not found");
             }
             return File.ReadAllText(Path.FLIGHT_DIARY_PATH); 
         }
@@ -66,8 +63,7 @@ namespace ControlTowner.IO
         {
             if (!File.Exists(Path.FLIGHT_DIARY_PATH))
             {
-                Console.WriteLine("File does not exist.");
-                return;
+                throw new FileNotFoundException("File not found");
             }
             string line = data + "\n";
             File.AppendAllText(Path.FLIGHT_DIARY_PATH, line);

@@ -13,20 +13,20 @@ namespace ControlTowner
     {
         static async Task Main(string[] args)
         {
+            var logger = new EventLogger();
+
             //load config
             var config = SimulationConfig.Load();
-            Console.WriteLine($"[LOADED] Runway count: {config.runawayCount}, time scale: {config.timeScale}");
+            logger?.Log($"[LOADED] Runway count: {config.runawayCount}, time scale: {config.timeScale}");
 
             //init controller
-            float standardLandDuration = config.landingDuration * 1000f / config.timeScale;
-            float standardTakeoffDuration = config.takeoffDuration * 1000f / config.timeScale;
-            var controller = new Controller(config);
+            var controller = new Controller(config, logger, new RandomLandingGenerator(), new FileStorageManager());
             controller.Init();
 
             //clock init
             SimpleClock.Instance.InitClock(
                 4, 
-                59,
+                0,
                 config.timeScale,
                 config.maintenanceStartHour,
                 config.maintenanceStartMinute,
@@ -35,16 +35,16 @@ namespace ControlTowner
             );
 
             //display init
-            var display = new DisplayManager(controller);
+            var display = new DisplayManager(controller, logger);
 
             //draw diary
-            await display.ShowYesterdayDiaryAsync(0.5f);
+            //await display.ShowYesterdayDiaryAsync(0.5f);
 
             //draw ui
             display.Start();
 
             //load schedule
-            controller.LoadSchedule();
+            controller.LoadSchedule(SimpleClock.Instance.SimulatedTime.Date);
 
             //main loop
             _ = Task.Run(MainLoop);

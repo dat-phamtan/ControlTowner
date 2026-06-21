@@ -8,7 +8,7 @@ namespace ControlTowner.Controllers
 {
     public interface ILandingGenerator
     {
-        public Flight? CheckGenerate(DateTime simulatedTime);
+        public Flight? CheckGenerate(DateTime simulatedTime, ILogger logger);
         public void Reset();
     }
 
@@ -16,7 +16,7 @@ namespace ControlTowner.Controllers
     {
         private bool isWaiting = false;
         private DateTime generateTime;
-        public Flight? CheckGenerate(DateTime simulatedTime)
+        public Flight? CheckGenerate(DateTime simulatedTime, ILogger logger)
         {
             Random random = new();
             if (!isWaiting)
@@ -31,7 +31,7 @@ namespace ControlTowner.Controllers
             {
                 isWaiting = false;
                 string code = "MH" + random.Next(100, 999).ToString();
-                return new Flight(code, FlightType.Landing);
+                return new Flight(code, FlightType.Landing, logger);
             }
             return null;
         }

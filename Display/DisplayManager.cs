@@ -14,7 +14,7 @@ namespace ControlTowner.Display
         private List<string> logBuffer = new();
         private List<Flight> schedule = new();
 
-        private readonly object logLock = new();
+        private static readonly object logLock = new();
 
         private const int MAX_LOG_LINES = 15;
         private const int ROW_CLOCK = 0;
@@ -27,10 +27,11 @@ namespace ControlTowner.Display
         private const int ROW_LOG_START = 21;
 
 
-        public DisplayManager(Controller controller)
+        public DisplayManager(Controller controller, ILogSource? logSource = null)
         {
+            logSource?.OnLog += AddLog;
             this.controller = controller;
-            this.controller.OnLogEntry += AddLog;
+            //this.controller.OnLogEntry += AddLog;
             this.controller.OnScheduleUpdated += UpdateSchedule;
         }
 
@@ -135,23 +136,26 @@ namespace ControlTowner.Display
             string diary = FlightDiaryIO.Load();
             if (string.IsNullOrWhiteSpace(diary))
             {
-                Console.WriteLine("[ATC] No diary found");
+                AddLog("[ATC] No diary found");
                 return;
             }
-            Console.WriteLine("YESTERDAY DIARY");
+            AddLog("YESTERDAY DIARY");
             foreach (string line in diary.Split('\n'))
             {
-                Console.WriteLine(" " + line);
+                AddLog(" " + line);
                 await Task.Delay((int)(intervalSeconds * 1000));
             }
-            Console.WriteLine("END DIARY");
+            AddLog("END DIARY");
         }
 
 
         private static void WriteAtPosition(int row, int col, string text)
         {
-            Console.SetCursorPosition(row, col);
-            Console.Write(text);
+            lock (logLock)
+            {
+                Console.SetCursorPosition(row, col);
+                Console.Write(text);
+            }
         }
     }
 }
