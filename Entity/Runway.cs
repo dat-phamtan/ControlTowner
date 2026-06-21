@@ -34,8 +34,8 @@ namespace ControlTowner.Entity
             {
                 CurrentFlight = null;
                 IsOccupied = false;
-                OnStateChanged?.Invoke(IsOccupied);
             }
+            OnStateChanged?.Invoke(IsOccupied);
         }
     }
 }

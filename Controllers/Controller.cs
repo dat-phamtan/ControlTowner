@@ -157,7 +157,7 @@ namespace ControlTowner.Controllers
             char flightType = (flight.Type == FlightType.Takeoff) ? 'T' : 'L';
             DateTime time = SimpleClock.Instance.SimulatedTime;
             storage.SaveDailyLog(flight.Code, time.Hour, time.Minute, runway.id, flightType, logger);
-            runway.Free();
+            Task.Run(runway.Free);
         }
 
 

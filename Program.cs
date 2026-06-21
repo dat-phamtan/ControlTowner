@@ -37,7 +37,7 @@ namespace ControlTowner
             //display init
             var display = new DisplayManager(controller, logger);
 
-            //draw diary
+            ////draw diary
             //await display.ShowYesterdayDiaryAsync(0.5f);
 
             //draw ui
