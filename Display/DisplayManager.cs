@@ -8,6 +8,7 @@ using ControlTowner.IO;
 
 namespace ControlTowner.Display
 {
+    //2 
     public class DisplayManager
     {
         private Controller controller;
@@ -18,15 +19,17 @@ namespace ControlTowner.Display
         private static readonly object consoleLock = new();
         private static readonly object scheduleLock = new();
 
+        private const int SECOND_COL_NUMS = 40;
+        private const int THIRD_COL_NUMS = 85;
         private const int MAX_LOG_LINES = 15;
         private const int ROW_CLOCK = 0;
         private const int ROW_STATUS = 1;
         private const int ROW_RUNWAY_HEADER = 3;
         private const int ROW_QUEUE = 6;
-        private const int ROW_SCHEDULE_HEADER = 9;
-        private const int ROW_SCHEDULE_START = 10;
-        private const int ROW_LOG_HEADER = 21;
-        private const int ROW_LOG_START = 22;
+        private const int ROW_SCHEDULE_HEADER = 18;
+        private const int ROW_SCHEDULE_START = 19;
+        private const int ROW_LOG_HEADER = 3;
+        private const int ROW_LOG_START = 4;
 
 
         public DisplayManager(Controller controller, ILogSource? logSource = null)
@@ -38,13 +41,16 @@ namespace ControlTowner.Display
 
         public void Start()
         {
+            if (OperatingSystem.IsWindows() && Console.WindowHeight < 40)
+                Console.WindowHeight = 40;
+
             Console.Clear();
             Console.CursorVisible = false;
             DrawStaticLabels();
             Task.Run(RenderLoop);
         }
 
-        
+
         private async Task RenderLoop()
         {
             while (true)
@@ -54,6 +60,7 @@ namespace ControlTowner.Display
                 RenderRunways();
                 RenderSchedule();
                 RenderLog();
+                //Test();
                 await Task.Delay(200);
             }
         }
@@ -61,23 +68,24 @@ namespace ControlTowner.Display
 
         private void DrawStaticLabels()
         {
-            WriteAtRow(ROW_RUNWAY_HEADER, "----------RUNWAY----------");
-            WriteAtRow(ROW_SCHEDULE_HEADER, "----------SCHEDULE----------");
-            WriteAtRow(ROW_LOG_HEADER, "----------DIARY----------");
+            WriteAtPosition("----------RUNWAY----------", ROW_RUNWAY_HEADER);
+            WriteAtPosition("----------SCHEDULE----------", ROW_SCHEDULE_HEADER);
+            WriteAtPosition("----------LOG----------", ROW_LOG_HEADER, SECOND_COL_NUMS);
+            WriteAtPosition("----------DIARY----------", ROW_LOG_HEADER, THIRD_COL_NUMS);
         }
 
         
         private void RenderClock()
         {
             var time = SimpleClock.Instance.SimulatedTime;
-            WriteAtRow(ROW_CLOCK, $"Clock: {time:dd/MM/yyyy HH:mm:ss}");
+            WriteAtPosition($"Clock: {time:dd/MM/yyyy HH:mm:ss}", ROW_CLOCK);
         }
 
 
         private void RenderStatus()
         {
             string status = (controller.IsMaintenanceMode()) ? "Status: Maintenance" : "Status: Working";
-            WriteAtRow(ROW_STATUS, status);
+            WriteAtPosition(status, ROW_STATUS);
         }
 
 
@@ -93,7 +101,7 @@ namespace ControlTowner.Display
                 else 
                     info = $"Runway {runway.id}: [EMPTY]";
 
-                WriteAtRow(ROW_RUNWAY_HEADER + 1 + i, info);
+                WriteAtPosition(info, ROW_RUNWAY_HEADER + 1 + i);
             }
         }
 
@@ -110,7 +118,7 @@ namespace ControlTowner.Display
             {
                 string line = "";
                 if (i < scheduleList.Count) line = $"{scheduleList[i].Code} {scheduleList[i].ScheduledTime:HH/mm} {scheduleList[i].State}";
-                WriteAtRow(ROW_SCHEDULE_START + i, line.PadRight(50));
+                WriteAtPosition(line.PadRight(SECOND_COL_NUMS - 5), ROW_SCHEDULE_START + i);
             }
         }
 
@@ -137,7 +145,8 @@ namespace ControlTowner.Display
                 string line = " ";
                 if (i < log.Count)
                     line += log[log.Count - 1 - i];
-                WriteAtRow(ROW_LOG_START + i, line.PadRight(80));
+                WriteAtPosition(line.PadRight(50), ROW_LOG_START + i, SECOND_COL_NUMS);
+
             }
         }
 
@@ -154,28 +163,45 @@ namespace ControlTowner.Display
 
         public async Task ShowYesterdayDiaryAsync(float intervalSeconds = 1)
         {
-            string diary = FlightDiaryIO.Load();
+            string diary = FlightDiaryIO.Load().Trim();
             if (string.IsNullOrWhiteSpace(diary))
             {
                 AddLog("[ATC] No diary found");
                 return;
             }
-            AddLog("---YESTERDAY DIARY---");
-            foreach (string line in diary.Split('\n'))
+            string[] diaryList = diary.Split('\n');
+            for (int i = 0; i < diaryList.Length; i++)
             {
-                AddLog(" " + line);
+                WriteAtPosition(diaryList[i], ROW_LOG_START + i, THIRD_COL_NUMS);
                 await Task.Delay((int)(intervalSeconds * 1000));
             }
-            AddLog("---END DIARY---");
+        }
+
+        public void Test()
+        {
+            WriteAtPosition("000000000000000000", 20, 55);
+            WriteAtPosition("000000000000000000", 21, 55);
+            WriteAtPosition("000000000000000000", 22, 55);
+            WriteAtPosition("000000000000000000", 23, 55);
+            WriteAtPosition("000000000000000000", 24, 55);
+            WriteAtPosition("000000000000000000", 25, 55);
         }
 
 
-        private static void WriteAtRow(int row, string text)
+        private static void WriteAtPosition(string text, int row, int col = 0)
         {
             lock (consoleLock)
             {
-                Console.SetCursorPosition(0, row);
-                Console.Write(text.PadRight(Console.WindowWidth - 1));
+                Console.SetCursorPosition(col, row);
+                int availableSpace = Console.WindowWidth - col - 1;
+                if (availableSpace <= 0) return;
+
+                if (text.Length > availableSpace)
+                {
+                    text = text.Substring(0, availableSpace - 3);
+                    text += "...";
+                }
+                Console.Write(text.PadRight(availableSpace));
             }
         }
     }

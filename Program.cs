@@ -9,29 +9,31 @@ using ControlTowner.Utility;
 
 namespace ControlTowner
 {
-    internal class Program
+    public class Program
     {
+        private const int START_HOUR = 2;
+        private const int START_MINUTE = 29;
+
         static async Task Main(string[] args)
         {
+            //logger init
             var logger = new EventLogger();
-
             //load config
-            var config = SimulationConfig.Load();
-            logger?.Log($"[LOADED] Runway count: {config.runawayCount}, time scale: {config.timeScale}");
+            var config = SimulationConfig.Load(logger);
 
             //init controller
-            var controller = new Controller(config, logger, new RandomLandingGenerator(), new FileStorageManager());
+            var controller = new Controller(config, START_HOUR, START_MINUTE, logger, new RandomLandingGenerator(), new FileStorageManager());
             controller.Init();
 
             //clock init
             SimpleClock.Instance.InitClock(
-                6, 
-                0,
-                config.timeScale,
-                config.maintenanceStartHour,
-                config.maintenanceStartMinute,
-                config.maintenanceEndHour,
-                config.maintenanceEndMinute
+                START_HOUR, 
+                START_MINUTE,
+                config.TimeScale,
+                config.MaintenanceStartHour,
+                config.MaintenanceStartMinute,
+                config.MaintenanceEndHour,
+                config.MaintenanceEndMinute
             );
 
             //display init
@@ -44,16 +46,13 @@ namespace ControlTowner
             display.Start();
 
             //load schedule
-            controller.LoadSchedule(SimpleClock.Instance.SimulatedTime.Date);
+            //controller.LoadSchedule(SimpleClock.Instance.SimulatedTime.Date);
 
             //main loop
-            _ = Task.Run(MainLoop);
-
-            //waiting
-            await Task.Delay(Timeout.Infinite);
+            await MainLoop();
         }
 
-        private static async void MainLoop()
+        private static async Task MainLoop()
         {
             while (true)
             {

@@ -16,6 +16,8 @@ namespace ControlTowner.Controllers
     {
         private bool isWaiting = false;
         private DateTime generateTime;
+        //private 
+
         public Flight? CheckGenerate(DateTime simulatedTime, ILogger logger)
         {
             Random random = new();

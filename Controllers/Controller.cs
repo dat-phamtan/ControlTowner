@@ -15,6 +15,8 @@ namespace ControlTowner.Controllers
     {
         private readonly float landingDuration;
         private readonly float takeoffDuration;
+        private int initHour;
+        private int initMinute;
 
         private readonly Queue<Flight> takeoffQueue = new();
         private readonly Queue<Flight> landingQueue = new();
@@ -37,14 +39,16 @@ namespace ControlTowner.Controllers
         public event Action<List<Flight>>? OnScheduleUpdated;
 
 
-        public Controller(SimulationConfig config, ILogger? logger = null, ILandingGenerator? generator = null, IStorage? storage = null)
+        public Controller(SimulationConfig config, int initHour, int initMinute, ILogger? logger = null, ILandingGenerator? generator = null, IStorage? storage = null)
         {
-            this.landingDuration = config.landingDuration;
-            this.takeoffDuration = config.takeoffDuration;
+            this.initHour = initHour;
+            this.initMinute = initMinute;
+            landingDuration = config.LandingDuration;
+            takeoffDuration = config.TakeoffDuration;
             this.storage = storage;
             this.logger = logger;
             simulationConfig = config;
-            runwayManager = new RunwayManager(config.runawayCount);
+            runwayManager = new RunwayManager(config.RunwayCount);
             currentState = new NormalAirportState();
             flightGenerator = generator;
         }
@@ -52,11 +56,29 @@ namespace ControlTowner.Controllers
 
         public void Init()
         {
+            MaintenanceInit();
             runwayManager.OnBecomeAvailable += ProcessQueues;
-
             SimpleClock.Instance.OnTick += HandleClockTick;
             SimpleClock.Instance.OnMaintenanceStart += HandleMaintenanceStart;
             SimpleClock.Instance.OnNewDayStart += HandleNewDayStart;
+        }
+
+        private void MaintenanceInit()
+        {
+            var start = new TimeSpan(simulationConfig.MaintenanceStartHour, simulationConfig.MaintenanceStartMinute, 0);
+            var end = new TimeSpan(simulationConfig.MaintenanceEndHour, simulationConfig.MaintenanceEndMinute, 0);
+            var target = new TimeSpan(initHour, initMinute, 0);
+            if (IsTimeOfDayBetween(target, start, end)) maintenanceMode = true;
+            else maintenanceMode = false;
+        }
+
+
+        public bool IsTimeOfDayBetween(TimeSpan target, TimeSpan start, TimeSpan end)
+        {
+            if (start <= end)
+                return target >= start && target <= end;
+            else
+                return target >= start || target <= end;
         }
 
 
@@ -91,15 +113,20 @@ namespace ControlTowner.Controllers
 
         public void EnqueueTakeoff(Flight flight)
         {
-            takeoffQueue.Enqueue(flight);
+            lock (queueLock)
+            {
+                takeoffQueue.Enqueue(flight);
+            }
             logger?.Log($"[QUEUE] Append flight {flight.Code} to Take off queue");
             ProcessQueues();
         }
 
-
         public void EnqueueLanding(Flight flight)
         {
-            landingQueue.Enqueue(flight);
+            lock (queueLock)
+            {
+                landingQueue.Enqueue(flight);
+            }
             logger?.Log($"[QUEUE] Append flight {flight.Code} to Landing queue");
             ProcessQueues();
         }
@@ -109,26 +136,29 @@ namespace ControlTowner.Controllers
         {
             lock (processLock)
             {
-                Runway? runway = runwayManager.GetAvailableRunway();
-                if (runway == null) return;
-                if (landingQueue.Count == 0 && takeoffQueue.Count == 0) return;
-
-                Flight? flight = null;
-                if (landingQueue.TryDequeue(out Flight? lf))
-                    flight = lf;
-                else if (takeoffQueue.TryDequeue(out Flight? tf))
-                    flight = tf;
-
-                if (flight != null && runway.AssignFlight(flight))
+                lock (queueLock)
                 {
-                    runway.RealDuration = (flight.Type == FlightType.Landing) ? landingDuration : takeoffDuration;
-                    ExecuteFlight(runway, flight);
+                    while (true)
+                    {
+                        if (landingQueue.Count == 0 && takeoffQueue.Count == 0) break;
+
+                        Runway? runway = runwayManager.GetAvailableRunway();
+                        if (runway == null) break;
+
+                        Flight? flight = null;
+                        if (landingQueue.TryDequeue(out Flight? lf))
+                            flight = lf;
+                        else if (takeoffQueue.TryDequeue(out Flight? tf))
+                            flight = tf;
+
+                        if (flight != null && runway.AssignFlight(flight))
+                        {
+                            runway.RealDuration = (flight.Type == FlightType.Landing) ? landingDuration : takeoffDuration;
+                            ExecuteFlight(runway, flight);
+                        }
+                    }
                 }
             }
-
-            if (runwayManager.GetAvailableRunway() != null &&
-                (landingQueue.Count > 0 || takeoffQueue.Count > 0))
-                ProcessQueues();
         }
 
 
@@ -192,7 +222,6 @@ namespace ControlTowner.Controllers
 
         private void HandleNewDayStart()
         {
-            logger?.Log("Start new day");
             maintenanceMode = false;
             currentState = new NormalAirportState();
             flightGenerator.Reset();
@@ -206,23 +235,27 @@ namespace ControlTowner.Controllers
         private async void GenerateTomorrowSchedule()
         {
             storage.GenerateDailySchedule(
-                simulationConfig.maintenanceStartHour, 
-                simulationConfig.maintenanceStartMinute, 
-                simulationConfig.maintenanceEndHour, 
-                simulationConfig.maintenanceEndMinute, 
+                simulationConfig.MaintenanceStartHour, 
+                simulationConfig.MaintenanceStartMinute, 
+                simulationConfig.MaintenanceEndHour, 
+                simulationConfig.MaintenanceEndMinute, 
                 unfinishedFlights, 
                 logger
             );
             logger?.Log($"[ATC] Generated schedule for tomorrow");
         }
 
-        
+
         private async Task WaitForAllFlightsCompleted()
         {
             while (true)
             {
                 bool queueEmpty;
-                queueEmpty = landingQueue.Count == 0 && takeoffQueue.Count == 0;
+                lock (queueLock)
+                {
+                    queueEmpty = landingQueue.Count == 0 && takeoffQueue.Count == 0;
+                }
+
                 if (queueEmpty && runwayManager.AllRunwayEmpty())
                 {
                     logger?.Log($"[ATC] All flight completed !");

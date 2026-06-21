@@ -43,7 +43,8 @@ namespace ControlTowner.Utility
             {
                 delta = (currentRealTime - lastRealTime).TotalSeconds;
                 oldTime = SimulatedTime;
-                SimulatedTime = SimulatedTime.AddSeconds(Math.Floor(delta * timeScale));
+    
+                SimulatedTime = SimulatedTime.AddSeconds(delta * timeScale); 
                 lastRealTime = currentRealTime;
                 newTime = SimulatedTime;
                 //Console.WriteLine($"{SimulatedTime}");
@@ -67,7 +68,7 @@ namespace ControlTowner.Utility
         }
 
 
-        private bool HasCrossedThreshold(DateTime oldTime, DateTime newTime, TimeSpan threshold)
+        public bool HasCrossedThreshold(DateTime oldTime, DateTime newTime, TimeSpan threshold)
         {
             TimeSpan oldTimeOfDay = oldTime.TimeOfDay;
             TimeSpan newTimeOfDay = newTime.TimeOfDay;
