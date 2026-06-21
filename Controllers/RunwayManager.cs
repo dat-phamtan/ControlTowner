@@ -10,6 +10,7 @@ namespace ControlTowner.Controllers
         public Runway[] runways;
         public Action? OnBecomeAvailable;
 
+
         public RunwayManager(int count)
         {
             runways = new Runway[count];
@@ -19,22 +20,28 @@ namespace ControlTowner.Controllers
             }
         }
 
+
         public Runway? GetAvailableRunway()
         {
             for (int i = 0; i < runways.Length; i++)
             {
-                if (!runways[i].IsOccupied)
-                {
-                    return runways[i];
-                }
+                if (!runways[i].IsOccupied) return runways[i];
             }
             return null;
         }
+
 
         public bool AllRunwayEmpty()
         {
             return GetAvailableRunway() == null;
         }
+
+
+        public Runway[] GetRunways()
+        {
+            return runways;
+        }
+
 
         private void OnRunwayChanged(bool isOccupied)
         {

@@ -8,31 +8,37 @@ namespace ControlTowner.Controllers
 {
     public interface ILandingGenerator
     {
-        public Flight? CheckGenerate(DateTime time);
+        public Flight? CheckGenerate(DateTime simulatedTime);
+        public void Reset();
     }
 
     public class RandomLandingGenerator : ILandingGenerator
     {
         private bool isWaiting = false;
         private DateTime generateTime;
-        public Flight? CheckGenerate(DateTime time)
+        public Flight? CheckGenerate(DateTime simulatedTime)
         {
             Random random = new();
             if (!isWaiting)
             {
-                int randomPeriod = random.Next(3, 7) * 1000;
-                generateTime = SimpleClock.Instance.SimulatedTime.AddSeconds(randomPeriod);
+                int randomPeriod = random.Next(180, 420);
+                generateTime = simulatedTime.AddSeconds(randomPeriod);
                 isWaiting = true;
                 return null;
             }
 
-            if (isWaiting && (generateTime < SimpleClock.Instance.SimulatedTime))
+            if (generateTime <= simulatedTime)
             {
                 isWaiting = false;
                 string code = "MH" + random.Next(100, 999).ToString();
                 return new Flight(code, FlightType.Landing);
             }
             return null;
+        }
+
+        public void Reset()
+        {
+            isWaiting = false;
         }
     }
 }

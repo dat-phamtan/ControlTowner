@@ -15,6 +15,12 @@ namespace ControlTowner.Config
         public int maintenanceStartMinute = 30;
         public int maintenanceEndHour = 5;
         public int maintenanceEndMinute = 15;
+
+        public static SimulationConfig Load()
+        {
+            var cfg = ConfigIO.Load();
+            if (cfg == null) return new SimulationConfig();
+            else return cfg;
+        }
     }
-    public Simua
 }

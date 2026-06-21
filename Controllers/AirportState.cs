@@ -8,33 +8,33 @@ namespace ControlTowner.Controllers
     
     public interface IAirportState
     {
-        void HandleLanding(Controller controller, Flight commingFlight);
-        void HandleTakeoff(Controller controller, Flight takingoffFlight);
+        void HandleLanding(Flight commingFlight);
+        void HandleTakeoff(Flight takingoffFlight);
     }
 
     public class NormalAirportState : IAirportState
     {
-        public void HandleLanding(Controller controller, Flight commingFlight)
+        public void HandleLanding(Flight commingFlight)
         {
-            
+            Console.WriteLine($"[ATC] Confirmed landing ! Flight: {commingFlight.Code}");
         }
 
-        public void HandleTakeoff(Controller controller, Flight takingoffFlight)
+        public void HandleTakeoff(Flight takingoffFlight)
         {
-            // i will imple
+            Console.WriteLine($"[ATC] Confirmed take off ! Flight: {takingoffFlight.Code}");
         }
     }
 
     public class MaintenanceAirportState : IAirportState
     {
-        public void HandleLanding(Controller controller, Flight commingFlight)
+        public void HandleLanding(Flight commingFlight)
         {
-            // i will imple
+            Console.WriteLine($"[ATC-MAINTAIN] Landing completed ! Flight: {commingFlight.Code}");
         }
 
-        public void HandleTakeoff(Controller controller, Flight takingoffFlight)
+        public void HandleTakeoff(Flight takingoffFlight)
         {
-            // i will imple
+            Console.WriteLine($"[ATC-MAINTAIN] Taking off completed ! Flight: {takingoffFlight.Code}");
         }
     }
 }
