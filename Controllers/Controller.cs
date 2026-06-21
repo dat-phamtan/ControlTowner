@@ -142,8 +142,8 @@ namespace ControlTowner.Controllers
 
         private async Task ATCHandleFlightConfirm(Flight flight)
         {
-            if (flight.Type == FlightType.Landing) currentState.HandleLanding(flight);
-            else currentState.HandleTakeoff(flight);
+            if (flight.Type == FlightType.Landing) currentState.HandleLanding(flight, logger);
+            else currentState.HandleTakeoff(flight, logger);
 
             await Task.CompletedTask;
         }
@@ -156,7 +156,7 @@ namespace ControlTowner.Controllers
 
             char flightType = (flight.Type == FlightType.Takeoff) ? 'T' : 'L';
             DateTime time = SimpleClock.Instance.SimulatedTime;
-            storage.SaveDailyLog(flight.Code, time.Hour, time.Minute, runway.id, flightType);
+            storage.SaveDailyLog(flight.Code, time.Hour, time.Minute, runway.id, flightType, logger);
             runway.Free();
         }
 
@@ -210,7 +210,8 @@ namespace ControlTowner.Controllers
                 simulationConfig.maintenanceStartMinute, 
                 simulationConfig.maintenanceEndHour, 
                 simulationConfig.maintenanceEndMinute, 
-                unfinishedFlights
+                unfinishedFlights, 
+                logger
             );
             logger?.Log($"[ATC] Generated schedule for tomorrow");
         }

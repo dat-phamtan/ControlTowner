@@ -11,14 +11,14 @@ namespace ControlTowner.Controllers
     public interface IStorage
     {
         public List<Flight> LoadDailySchedule(DateTime today, ILogger logger);
-        public void SaveDailyLog(string flightCode, int flightHour, int flightMinute, int runwayId, char flightType);
-        public void GenerateDailySchedule(int mainStartHour, int mainStartMinute, int mainEndHour, int mainEndMinute, List<Flight>? delayedDailySchedule);
+        public void SaveDailyLog(string flightCode, int flightHour, int flightMinute, int runwayId, char flightType, ILogger logger);
+        public void GenerateDailySchedule(int mainStartHour, int mainStartMinute, int mainEndHour, int mainEndMinute, List<Flight>? delayedDailySchedule, ILogger logger);
     }
 
     public class FileStorageManager : IStorage
     {
         int bufferMinute = 20;
-        public void GenerateDailySchedule(int mainStartHour, int mainStartMinute, int mainEndHour, int mainEndMinute, List<Flight>? delayedDailySchedule)
+        public void GenerateDailySchedule(int mainStartHour, int mainStartMinute, int mainEndHour, int mainEndMinute, List<Flight>? delayedDailySchedule, ILogger logger)
         {
             var lines = new List<string>();
             int hour = mainEndHour;
@@ -45,7 +45,7 @@ namespace ControlTowner.Controllers
                 hour++;
             }
             FlightScheduleIO.Save(string.Join('\n', lines));
-            Console.WriteLine($"[IO] Generated flight schedule.");
+            logger.Log($"[IO] Generated flight schedule.");
         }
 
 
@@ -71,11 +71,11 @@ namespace ControlTowner.Controllers
             return flights;
         }
 
-        public void SaveDailyLog(string flightCode, int flightHour, int flightMinute, int runwayId, char flightType)
+        public void SaveDailyLog(string flightCode, int flightHour, int flightMinute, int runwayId, char flightType, ILogger logger)
         {
             string log = flightCode + " " + flightHour + " " + flightMinute + " " + runwayId + " " + flightType;
             FlightDiaryIO.Save(log);
-            Console.WriteLine($"[LOG] Save daily log: {log}");
+            logger.Log($"[LOG] Save daily log: {log}");
         }
     }
 }

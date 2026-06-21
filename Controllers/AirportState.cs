@@ -1,4 +1,5 @@
 ﻿using ControlTowner.Entity;
+using ControlTowner.Utility;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,33 +9,33 @@ namespace ControlTowner.Controllers
     
     public interface IAirportState
     {
-        void HandleLanding(Flight commingFlight);
-        void HandleTakeoff(Flight takingoffFlight);
+        void HandleLanding(Flight commingFlight, ILogger logger);
+        void HandleTakeoff(Flight takingoffFlight, ILogger logger);
     }
 
     public class NormalAirportState : IAirportState
     {
-        public void HandleLanding(Flight commingFlight)
+        public void HandleLanding(Flight commingFlight, ILogger logger)
         {
-            Console.WriteLine($"[ATC] Confirmed landing ! Flight: {commingFlight.Code}");
+            logger?.Log($"[ATC] Confirmed landing ! Flight: {commingFlight.Code}");
         }
 
-        public void HandleTakeoff(Flight takingoffFlight)
+        public void HandleTakeoff(Flight takingoffFlight, ILogger logger)
         {
-            Console.WriteLine($"[ATC] Confirmed take off ! Flight: {takingoffFlight.Code}");
+            logger?.Log($"[ATC] Confirmed take off ! Flight: {takingoffFlight.Code}");
         }
     }
 
     public class MaintenanceAirportState : IAirportState
     {
-        public void HandleLanding(Flight commingFlight)
+        public void HandleLanding(Flight commingFlight, ILogger logger)
         {
-            Console.WriteLine($"[ATC-MAINTAIN] Landing completed ! Flight: {commingFlight.Code}");
+            logger?.Log($"[ATC-MAINTAIN] Landing completed ! Flight: {commingFlight.Code}");
         }
 
-        public void HandleTakeoff(Flight takingoffFlight)
+        public void HandleTakeoff(Flight takingoffFlight, ILogger logger)
         {
-            Console.WriteLine($"[ATC-MAINTAIN] Taking off completed ! Flight: {takingoffFlight.Code}");
+            logger?.Log($"[ATC-MAINTAIN] Taking off completed ! Flight: {takingoffFlight.Code}");
         }
     }
 }
