@@ -25,7 +25,7 @@ namespace ControlTowner
 
             //clock init
             SimpleClock.Instance.InitClock(
-                4, 
+                6, 
                 0,
                 config.timeScale,
                 config.maintenanceStartHour,

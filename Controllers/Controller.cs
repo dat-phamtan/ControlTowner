@@ -33,7 +33,6 @@ namespace ControlTowner.Controllers
         private bool maintenanceMode = false;
         private List<Flight> unfinishedFlights = new();
 
-        public event Action<string>? OnLogEntry;
         public event Action<List<Flight>>? OnScheduleUpdated;
 
 

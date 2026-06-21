@@ -11,32 +11,35 @@ namespace ControlTowner.Display
     public class DisplayManager
     {
         private Controller controller;
-        private List<string> logBuffer = new();
+        private readonly List<string> logBuffer = new();
         private List<Flight> schedule = new();
 
         private static readonly object logLock = new();
+        private static readonly object consoleLock = new();
+        private static readonly object scheduleLock = new();
 
         private const int MAX_LOG_LINES = 15;
         private const int ROW_CLOCK = 0;
         private const int ROW_STATUS = 1;
         private const int ROW_RUNWAY_HEADER = 3;
         private const int ROW_QUEUE = 6;
-        private const int ROW_SCHEDULE_HEADER = 8;
-        private const int ROW_SCHEDULE_START = 9;
-        private const int ROW_LOG_HEADER = 20;
-        private const int ROW_LOG_START = 21;
+        private const int ROW_SCHEDULE_HEADER = 9;
+        private const int ROW_SCHEDULE_START = 10;
+        private const int ROW_LOG_HEADER = 21;
+        private const int ROW_LOG_START = 22;
 
 
         public DisplayManager(Controller controller, ILogSource? logSource = null)
         {
             logSource?.OnLog += AddLog;
             this.controller = controller;
-            //this.controller.OnLogEntry += AddLog;
             this.controller.OnScheduleUpdated += UpdateSchedule;
         }
 
         public void Start()
         {
+            Console.Clear();
+            Console.CursorVisible = false;
             DrawStaticLabels();
             Task.Run(RenderLoop);
         }
@@ -58,76 +61,94 @@ namespace ControlTowner.Display
 
         private void DrawStaticLabels()
         {
-            WriteAtPosition(ROW_RUNWAY_HEADER, 0, "----------RUNWAY----------");
-            WriteAtPosition(ROW_SCHEDULE_HEADER, 0, "----------SCHEDULE----------");
-            WriteAtPosition(ROW_LOG_HEADER, 0, "----------DIARY----------");
+            WriteAtRow(ROW_RUNWAY_HEADER, "----------RUNWAY----------");
+            WriteAtRow(ROW_SCHEDULE_HEADER, "----------SCHEDULE----------");
+            WriteAtRow(ROW_LOG_HEADER, "----------DIARY----------");
         }
 
         
         private void RenderClock()
         {
             var time = SimpleClock.Instance.SimulatedTime;
-            WriteAtPosition(ROW_CLOCK, 0, $"Clock: {time:dd/MM/yyyy HH:mm:ss}");
+            WriteAtRow(ROW_CLOCK, $"Clock: {time:dd/MM/yyyy HH:mm:ss}");
         }
 
 
         private void RenderStatus()
         {
             string status = (controller.IsMaintenanceMode()) ? "Status: Maintenance" : "Status: Working";
-            WriteAtPosition(ROW_STATUS, 0, status);
+            WriteAtRow(ROW_STATUS, status);
         }
 
 
         private void RenderRunways()
         {
             var runways = controller.GetRunways();
-            foreach (var runway in runways)
+            for(int i = 0; i < runways.Length; i++) 
             {
                 string info;
-                int row = 1;
+                var runway = runways[i];
                 if (runway.IsOccupied) 
                     info = $"Runway {runway.id}: [USED] {runway.CurrentFlight?.Code} {runway.CurrentFlight?.Type}";
                 else 
                     info = $"Runway {runway.id}: [EMPTY]";
 
-                WriteAtPosition(ROW_RUNWAY_HEADER + row, 2, info);
+                WriteAtRow(ROW_RUNWAY_HEADER + 1 + i, info);
             }
         }
 
 
         private void RenderSchedule()
         {
-            var scheduleList = new List<Flight>(schedule);
+            List<Flight> scheduleList;
+            lock (scheduleLock)
+            {
+                scheduleList = new(schedule);
+            }
+            
             for (int i = 0; i < 10; i++)
             {
                 string line = "";
                 if (i < scheduleList.Count) line = $"{scheduleList[i].Code} {scheduleList[i].ScheduledTime:HH/mm} {scheduleList[i].State}";
-                WriteAtPosition(ROW_SCHEDULE_START + i, 2, line);
+                WriteAtRow(ROW_SCHEDULE_START + i, line.PadRight(50));
             }
         }
 
 
         private void UpdateSchedule(List<Flight> flights)
         {
-            schedule = flights;
+            lock (scheduleLock)
+            {
+                schedule = flights;
+            }
         }
 
 
         private void RenderLog()
         {
-            var log = new List<string>(logBuffer);
+            List<string> log;
+            lock (logLock)
+            {
+                log = new(logBuffer);
+            }
+            
             for (int i = 0; i < MAX_LOG_LINES; i++)
             {
-                string line = (i < log.Count) ? log[log.Count - 1 - i] : string.Empty;
-                WriteAtPosition(ROW_LOG_START + i, 2, line);
+                string line = " ";
+                if (i < log.Count)
+                    line += log[log.Count - 1 - i];
+                WriteAtRow(ROW_LOG_START + i, line.PadRight(80));
             }
         }
 
 
         private void AddLog(string newLog)
         {
-            logBuffer.Add(newLog);
-            if (logBuffer.Count > 50) logBuffer.RemoveAt(0);
+            lock (logLock)
+            {
+                logBuffer.Add(newLog);
+                if (logBuffer.Count > 50) logBuffer.RemoveAt(0);
+            }
         }
 
 
@@ -139,22 +160,22 @@ namespace ControlTowner.Display
                 AddLog("[ATC] No diary found");
                 return;
             }
-            AddLog("YESTERDAY DIARY");
+            AddLog("---YESTERDAY DIARY---");
             foreach (string line in diary.Split('\n'))
             {
                 AddLog(" " + line);
                 await Task.Delay((int)(intervalSeconds * 1000));
             }
-            AddLog("END DIARY");
+            AddLog("---END DIARY---");
         }
 
 
-        private static void WriteAtPosition(int row, int col, string text)
+        private static void WriteAtRow(int row, string text)
         {
-            lock (logLock)
+            lock (consoleLock)
             {
-                Console.SetCursorPosition(row, col);
-                Console.Write(text);
+                Console.SetCursorPosition(0, row);
+                Console.Write(text.PadRight(Console.WindowWidth - 1));
             }
         }
     }
