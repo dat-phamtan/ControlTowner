@@ -15,7 +15,7 @@ namespace ControlTowner.Entity
         public FlightState State { get; set; } = FlightState.Waiting;
         public DateTime ScheduledTime { get; set; } = default;
         public ILogger logger;
-        private FlightType takeoff;
+        //private FlightType takeoff;
 
         public event Action<Runway, Flight>? OnActionCompleted;
         public event Func<Flight, Task>? OnRequestConfirmation;

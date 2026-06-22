@@ -199,7 +199,7 @@ namespace ControlTowner.Controllers
                 var landing = flightGenerator.CheckGenerate(simulatedTime, logger);
                 if (landing != null)
                 {
-                    logger?.Log($"[ATC] Got landing request from: {landing.Code}");
+                    logger?.Log($"[SYSTEM] Generated landing flight: {landing.Code}");
                     EnqueueLanding(landing);
                 }
             }

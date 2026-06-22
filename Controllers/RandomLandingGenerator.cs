@@ -19,6 +19,8 @@ namespace ControlTowner.Controllers
         private bool isWaiting = false;
         private DateTime generateTime;
         private string[] header = { "MH", "VN", "SK", "FA", "OL" };
+
+
         public Flight? CheckGenerate(DateTime simulatedTime, ILogger logger)
         {
             Random random = new();
@@ -39,6 +41,7 @@ namespace ControlTowner.Controllers
             }
             return null;
         }
+
 
         public void Reset()
         {

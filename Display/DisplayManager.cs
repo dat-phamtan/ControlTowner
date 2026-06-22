@@ -8,7 +8,6 @@ using ControlTowner.IO;
 
 namespace ControlTowner.Display
 {
-    //2 
     public class DisplayManager
     {
         private Controller controller;
@@ -163,21 +162,23 @@ namespace ControlTowner.Display
         }
 
 
-        public async void HandleYesterdayDiary()
+        private async void HandleYesterdayDiary()
         {
             await ShowYesterdayDiaryAsync(1);
         }
 
-        public async Task ShowYesterdayDiaryAsync(float intervalSeconds = 1)
+
+        private async Task ShowYesterdayDiaryAsync(float intervalSeconds = 1)
         {
             string diary = FlightDiaryIO.Load().Trim();
             FlightDiaryIO.ClearDiary();
             if (string.IsNullOrWhiteSpace(diary))
             {
-                AddLog("[ATC] No diary found");
+                AddLog("[ATC] Tommorrow's diary count: 0");
                 return;
             }
             string[] diaryList = diary.Split('\n');
+            AddLog($"[ATC] Tommorrow's diary count: {diaryList.Length}");
             for (int i = 0; i < diaryList.Length; i++)
             {
                 WriteAtPosition(diaryList[i], ROW_DIARY_START + i);

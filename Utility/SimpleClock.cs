@@ -68,7 +68,7 @@ namespace ControlTowner.Utility
         }
 
 
-        public bool HasCrossedThreshold(DateTime oldTime, DateTime newTime, TimeSpan threshold)
+        private bool HasCrossedThreshold(DateTime oldTime, DateTime newTime, TimeSpan threshold)
         {
             TimeSpan oldTimeOfDay = oldTime.TimeOfDay;
             TimeSpan newTimeOfDay = newTime.TimeOfDay;

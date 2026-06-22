@@ -16,16 +16,13 @@ namespace ControlTowner
 
         static async Task Main(string[] args)
         {
-            //logger init
+            //init
             var logger = new EventLogger();
-            //load config
             var config = SimulationConfig.Load(logger);
 
-            //init controller
             var controller = new Controller(config, START_HOUR, START_MINUTE, logger, new RandomLandingGenerator(), new FileStorageManager());
             controller.Init();
 
-            //clock init
             SimpleClock.Instance.InitClock(
                 START_HOUR, 
                 START_MINUTE,
@@ -36,7 +33,6 @@ namespace ControlTowner
                 config.MaintenanceEndMinute
             );
 
-            //display init
             var display = new DisplayManager(controller, logger);
 
             //draw ui
