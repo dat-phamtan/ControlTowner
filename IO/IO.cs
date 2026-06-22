@@ -68,5 +68,14 @@ namespace ControlTowner.IO
             string line = data + "\n";
             File.AppendAllText(Path.FLIGHT_DIARY_PATH, line);
         }
+
+        public static void ClearDiary()
+        {
+            if (!File.Exists(Path.FLIGHT_DIARY_PATH))
+            {
+                throw new FileNotFoundException("File not found");
+            }
+            File.WriteAllText(Path.FLIGHT_DIARY_PATH, "");
+        }
     }
 }

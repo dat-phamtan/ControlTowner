@@ -19,17 +19,17 @@ namespace ControlTowner.Display
         private static readonly object consoleLock = new();
         private static readonly object scheduleLock = new();
 
-        private const int SECOND_COL_NUMS = 40;
-        private const int THIRD_COL_NUMS = 85;
+        private const int SECOND_COL_NUMS = 55;
         private const int MAX_LOG_LINES = 15;
         private const int ROW_CLOCK = 0;
         private const int ROW_STATUS = 1;
         private const int ROW_RUNWAY_HEADER = 3;
-        private const int ROW_QUEUE = 6;
-        private const int ROW_SCHEDULE_HEADER = 18;
-        private const int ROW_SCHEDULE_START = 19;
-        private const int ROW_LOG_HEADER = 3;
-        private const int ROW_LOG_START = 4;
+        private const int ROW_SCHEDULE_HEADER = 20;
+        private const int ROW_SCHEDULE_START = 21;
+        private const int ROW_LOG_HEADER = 2;
+        private const int ROW_LOG_START = 3;
+        private const int ROW_DIARY_HEADER = 20;
+        private const int ROW_DIARY_START = 21;
 
 
         public DisplayManager(Controller controller, ILogSource? logSource = null)
@@ -37,12 +37,13 @@ namespace ControlTowner.Display
             logSource?.OnLog += AddLog;
             this.controller = controller;
             this.controller.OnScheduleUpdated += UpdateSchedule;
+            this.controller.OnLogDiary += HandleYesterdayDiary;
         }
 
         public void Start()
         {
             if (OperatingSystem.IsWindows() && Console.WindowHeight < 40)
-                Console.WindowHeight = 40;
+                Console.WindowHeight = 100;
 
             Console.Clear();
             Console.CursorVisible = false;
@@ -69,9 +70,9 @@ namespace ControlTowner.Display
         private void DrawStaticLabels()
         {
             WriteAtPosition("----------RUNWAY----------", ROW_RUNWAY_HEADER);
-            WriteAtPosition("----------SCHEDULE----------", ROW_SCHEDULE_HEADER);
+            WriteAtPosition("----------DIARY----------", ROW_DIARY_HEADER);
+            WriteAtPosition("----------SCHEDULE----------", ROW_SCHEDULE_HEADER, SECOND_COL_NUMS);
             WriteAtPosition("----------LOG----------", ROW_LOG_HEADER, SECOND_COL_NUMS);
-            WriteAtPosition("----------DIARY----------", ROW_LOG_HEADER, THIRD_COL_NUMS);
         }
 
         
@@ -114,11 +115,12 @@ namespace ControlTowner.Display
                 scheduleList = new(schedule);
             }
             
-            for (int i = 0; i < 10; i++)
+            int numSchedule = scheduleList.Count;
+            for (int i = 0; i < numSchedule; i++)
             {
                 string line = "";
-                if (i < scheduleList.Count) line = $"{scheduleList[i].Code} {scheduleList[i].ScheduledTime:HH/mm} {scheduleList[i].State}";
-                WriteAtPosition(line.PadRight(SECOND_COL_NUMS - 5), ROW_SCHEDULE_START + i);
+                if (i < scheduleList.Count) line = $"{scheduleList[i].ScheduledTime.ToString("dd/MM/yyyy HH:mm")} {scheduleList[i].Code} {scheduleList[i].State}";
+                WriteAtPosition(line, ROW_SCHEDULE_START + i, SECOND_COL_NUMS);
             }
         }
 
@@ -161,9 +163,15 @@ namespace ControlTowner.Display
         }
 
 
+        public async void HandleYesterdayDiary()
+        {
+            await ShowYesterdayDiaryAsync(1);
+        }
+
         public async Task ShowYesterdayDiaryAsync(float intervalSeconds = 1)
         {
             string diary = FlightDiaryIO.Load().Trim();
+            FlightDiaryIO.ClearDiary();
             if (string.IsNullOrWhiteSpace(diary))
             {
                 AddLog("[ATC] No diary found");
@@ -172,21 +180,20 @@ namespace ControlTowner.Display
             string[] diaryList = diary.Split('\n');
             for (int i = 0; i < diaryList.Length; i++)
             {
-                WriteAtPosition(diaryList[i], ROW_LOG_START + i, THIRD_COL_NUMS);
+                WriteAtPosition(diaryList[i], ROW_DIARY_START + i);
                 await Task.Delay((int)(intervalSeconds * 1000));
             }
         }
 
-        public void Test()
-        {
-            WriteAtPosition("000000000000000000", 20, 55);
-            WriteAtPosition("000000000000000000", 21, 55);
-            WriteAtPosition("000000000000000000", 22, 55);
-            WriteAtPosition("000000000000000000", 23, 55);
-            WriteAtPosition("000000000000000000", 24, 55);
-            WriteAtPosition("000000000000000000", 25, 55);
-        }
-
+        //public void Test()
+        //{
+        //    WriteAtPosition("000000000000000000", 20, 55);
+        //    WriteAtPosition("000000000000000000", 21, 55);
+        //    WriteAtPosition("000000000000000000", 22, 55);
+        //    WriteAtPosition("000000000000000000", 23, 55);
+        //    WriteAtPosition("000000000000000000", 24, 55);
+        //    WriteAtPosition("000000000000000000", 25, 55);
+        //}
 
         private static void WriteAtPosition(string text, int row, int col = 0)
         {

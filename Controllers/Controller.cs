@@ -37,6 +37,7 @@ namespace ControlTowner.Controllers
         private List<Flight> unfinishedFlights = new();
 
         public event Action<List<Flight>>? OnScheduleUpdated;
+        public event Action? OnLogDiary;
 
 
         public Controller(SimulationConfig config, int initHour, int initMinute, ILogger? logger = null, ILandingGenerator? generator = null, IStorage? storage = null)
@@ -86,7 +87,7 @@ namespace ControlTowner.Controllers
         {
             todaySchedule = storage.LoadDailySchedule(today, logger);
             unfinishedFlights.Clear();
-            logger?.Log($"[ATC] Loaded {todaySchedule.Count} diary's records");
+            logger?.Log($"[ATC] Today's schedule count: {todaySchedule.Count} ");
             OnScheduleUpdated?.Invoke( todaySchedule );
         }
 
@@ -117,7 +118,7 @@ namespace ControlTowner.Controllers
             {
                 takeoffQueue.Enqueue(flight);
             }
-            logger?.Log($"[QUEUE] Append flight {flight.Code} to Take off queue");
+            logger?.Log($"[SYSTEM] Take off queue append: {flight.Code}");
             ProcessQueues();
         }
 
@@ -127,7 +128,7 @@ namespace ControlTowner.Controllers
             {
                 landingQueue.Enqueue(flight);
             }
-            logger?.Log($"[QUEUE] Append flight {flight.Code} to Landing queue");
+            logger?.Log($"[SYSTEM] Landing queue append: {flight.Code}");
             ProcessQueues();
         }
 
@@ -181,12 +182,12 @@ namespace ControlTowner.Controllers
 
         private void ATCHandleFlightComplete(Runway runway, Flight flight)
         {
-            string action = (flight.Type == FlightType.Takeoff) ? "taking off" : "landing";
-            logger?.Log($"[ATC] Completed: Flight {flight.Code} {action} in runway number {runway.id}");
+            string action = (flight.Type == FlightType.Takeoff) ? "took off" : "landed";
+            logger?.Log($"[ATC] Completed: Flight {flight.Code} {action} ({runway.id})");
 
             char flightType = (flight.Type == FlightType.Takeoff) ? 'T' : 'L';
             DateTime time = SimpleClock.Instance.SimulatedTime;
-            storage.SaveDailyLog(flight.Code, time.Hour, time.Minute, runway.id, flightType, logger);
+            storage.SaveDailyLog(flight.Code, time, runway.id, flightType, logger);
             Task.Run(runway.Free);
         }
 
@@ -198,7 +199,7 @@ namespace ControlTowner.Controllers
                 var landing = flightGenerator.CheckGenerate(simulatedTime, logger);
                 if (landing != null)
                 {
-                    logger?.Log($"[ATC] Got a landing request from: {landing.Code}");
+                    logger?.Log($"[ATC] Got landing request from: {landing.Code}");
                     EnqueueLanding(landing);
                 }
             }
@@ -229,6 +230,7 @@ namespace ControlTowner.Controllers
             var today = SimpleClock.Instance.SimulatedTime.Date;
             logger?.Log($"[ATC] Start new day ({today:dd/MM/yyyy})");
             LoadSchedule(today);
+            OnLogDiary?.Invoke();
         }
 
 
@@ -242,7 +244,7 @@ namespace ControlTowner.Controllers
                 unfinishedFlights, 
                 logger
             );
-            logger?.Log($"[ATC] Generated schedule for tomorrow");
+            logger?.Log($"[SYSTEM] Generated schedule for tomorrow");
         }
 
 
@@ -258,7 +260,7 @@ namespace ControlTowner.Controllers
 
                 if (queueEmpty && runwayManager.AllRunwayEmpty())
                 {
-                    logger?.Log($"[ATC] All flight completed !");
+                    logger?.Log($"[ATC] All flight completed!!");
                     break;
                 }
                 await Task.Delay(500);

@@ -17,12 +17,12 @@ namespace ControlTowner.Controllers
     {
         public void HandleLanding(Flight commingFlight, ILogger logger)
         {
-            logger?.Log($"[ATC] Confirmed landing ! Flight: {commingFlight.Code}");
+            logger?.Log($"[ATC] Landing confirmed! Flight: {commingFlight.Code}");
         }
 
         public void HandleTakeoff(Flight takingoffFlight, ILogger logger)
         {
-            logger?.Log($"[ATC] Confirmed take off ! Flight: {takingoffFlight.Code}");
+            logger?.Log($"[ATC] Taking off confirmed! Flight: {takingoffFlight.Code}");
         }
     }
 

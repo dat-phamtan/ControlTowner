@@ -1,10 +1,10 @@
 {
   "RunawayCount": 5,
-  "TimeScale": 10,
+  "TimeScale": 100,
   "TakeoffDuration": 20.0,
   "LandingDuration": 25.0,
-  "MaintenanceStartHour": 2,
+  "MaintenanceStartHour": 21,
   "MaintenanceStartMinute": 30,
-  "MaintenanceEndHour": 5,
-  "MaintenanceEndMinute": 15
+  "MaintenanceEndHour": 22,
+  "MaintenanceEndMinute": 30
 }

@@ -11,8 +11,8 @@ namespace ControlTowner
 {
     public class Program
     {
-        private const int START_HOUR = 2;
-        private const int START_MINUTE = 29;
+        private const int START_HOUR = 22;
+        private const int START_MINUTE = 28;
 
         static async Task Main(string[] args)
         {
@@ -39,14 +39,8 @@ namespace ControlTowner
             //display init
             var display = new DisplayManager(controller, logger);
 
-            ////draw diary
-            //await display.ShowYesterdayDiaryAsync(0.5f);
-
             //draw ui
             display.Start();
-
-            //load schedule
-            //controller.LoadSchedule(SimpleClock.Instance.SimulatedTime.Date);
 
             //main loop
             await MainLoop();

@@ -22,12 +22,12 @@ namespace ControlTowner.Config
             var cfg = ConfigIO.Load();
             if (cfg == null)
             {
-                logger?.Log($"[SYSTEM] No file to load, load default!! Runway count: {3}, time scale: {1.5}");
+                logger?.Log($"[SYSTEM] No file to load, load default!!");
                 return new SimulationConfig();
             }
             else 
             {
-                logger?.Log($"[SYSTEM] Load config success!! Runway count: {cfg.RunwayCount}, time scale: {cfg.TimeScale}");
+                logger?.Log($"[SYSTEM] Load config success!!");
                 return cfg; 
             }
         }
